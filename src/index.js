@@ -7,77 +7,59 @@ const loader = document.querySelector(".loader");
 const error = document.querySelector(".error");
 const catInfo = document.querySelector(".cat-info");
 
-function showLoader() {
-    loader.style.display = "block";
+function toggleDisplay(element, show) {
+    element.style.display = show ? "block" : "none";
 }
 
-function hideLoader() {
-    loader.style.display = "none";
+function showCatInfo({ breeds, url }) {
+    const { name: breed, description, temperament } = breeds[0]; 
+    catInfo.innerHTML = `<p>Breed: ${breed}</p>
+                    <p>Description: ${description}</p>
+                    <p>Temperament: ${temperament}</p>
+                    <img src="${url}" alt="${breed}" />`;
+    toggleDisplay(catInfo, true); 
 }
 
 function showError() {
-    error.style.display = "block";
-}
-
-function hideError() {
-    error.style.display = "none";
-}
-
-function showCatInfo(info) {
-    catInfo.innerHTML = `<p>Breed: ${info.breed}</p>
-                    <p>Description: ${info.description}</p>
-                    <p>Temperament: ${info.temperament}</p>
-                    <img src="${info.image}" alt="${info.breed}" />`;
-    catInfo.style.display = "block";
-}
-
-function hideCatInfo() {
-    catInfo.style.display = "none";
+    Notiflix.Notify.failure("Oops! Something went wrong! Try reloading the page.");
 }
 
 breedSelect.addEventListener("change", (event) => {
     const selectedBreedId = event.target.value;
 
-    showLoader();
-    hideError();
-    hideCatInfo();
+    toggleDisplay(loader, true);
+    toggleDisplay(catInfo, false);
 
     fetchCatByBreed(selectedBreedId)
-    .then((cats) => {
-        hideLoader();
-        showCatInfo({
-            breed: cats[0].breeds[0].name,
-            description: cats[0].breeds[0].description,
-            temperament: cats[0].breeds[0].temperament,
-            image: cats[0].url,
-    });
-        hideError(); 
-    })
-    .catch(() => {
-        hideLoader();
-        showError(); 
+        .then((cats) => {
+            toggleDisplay(loader, false);
+            showCatInfo(cats[0]);
+        })
+        .catch(() => {
+            toggleDisplay(loader, false);
+            showError();
     });
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    showLoader();
-    hideError();
-    hideCatInfo();
+    toggleDisplay(loader, true);
+    toggleDisplay(catInfo, false);
 
     fetchBreeds()
         .then((breeds) => {
-        hideLoader();
-        breedSelect.style.display = "block";
+            toggleDisplay(loader, false);
+            breedSelect.style.display = "block";
 
-        breeds.forEach((breed) => {
-        const option = document.createElement("option");
-        option.value = breed.id;
-        option.textContent = breed.name;
-        breedSelect.appendChild(option);
+            const options = breeds.map((breed) => {
+                const option = document.createElement("option");
+                option.value = breed.id;
+                option.textContent = breed.name; 
+                return option;
+            });
+            breedSelect.append(...options);
+        })
+        .catch(() => {
+            toggleDisplay(loader, false);
+            showError();
         });
-    })
-    .catch(() => {
-        hideLoader();
-        showError();
-    });
 });
